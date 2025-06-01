@@ -1,0 +1,141 @@
+body {
+  margin: 0;
+  font-style: poppins;
+}
+
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: white;
+  padding: 10px 20px;
+  color: #111827;
+}
+
+/* Group hamburger + nav links */
+.left-section {
+  display: flex;
+  align-items: center;
+  gap: 12px; /* tighter spacing */
+}
+
+/* Hamburger Icon */
+.hamburger {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+}
+
+.bar {
+  width: 20px;
+  height: 2.5px;
+  background-color: #111827;
+  border-radius: 2px;
+}
+
+/* Nav Links */
+.nav-links {
+  display: flex;
+  gap: 12px; /* less gap between links */
+}
+
+.nav-item {
+  color: #DCDDDD;
+  text-decoration: none;
+  font-size: 16px;
+  padding: 6px 10px;
+  border-radius: 4px;
+  transition: background 0.2s;
+  
+}
+
+.nav-item:hover {
+  background-color: #e5e7eb;
+}
+
+.nav-item.active {
+  
+  color: #11263C;
+}
+
+/* Logo / Profile Pic */
+.logo {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.profile-pic-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 35px;
+  /* Optional: add margin or padding if needed */
+}
+
+.profile-pic {
+  width: 50px; /* adjust size as needed */
+  height: 50px;
+  border-radius: 16px; /* make it circular */
+  object-fit: cover;
+}
+
+/* Responsive Design */
+@media screen and (max-width: 768px) {
+  .navbar {
+    padding: 8px 16px;
+  }
+  
+  .left-section {
+    gap: 10px;
+  }
+  
+  .nav-links {
+    gap: 8px;
+  }
+  
+  .nav-item {
+    font-size: 14px;
+    padding: 5px 8px;
+  }
+  
+  .profile-pic {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .navbar {
+    padding: 6px 12px;
+  }
+  
+  .left-section {
+    gap: 8px;
+  }
+  
+  .nav-links {
+    gap: 6px;
+  }
+  
+  .nav-item {
+    font-size: 13px;
+    padding: 4px 6px;
+  }
+  
+  .profile-pic {
+    width: 35px;
+    height: 35px;
+    border-radius: 12px;
+  }
+  
+  .hamburger {
+    gap: 3px;
+  }
+  
+  .bar {
+    width: 18px;
+    height: 2px;
+  }
+}

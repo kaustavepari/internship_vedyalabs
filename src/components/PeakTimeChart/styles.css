@@ -1,0 +1,86 @@
+.peak-time-chart {
+  background-color: rgba(228, 228, 228, 0.3); /* #E4E4E4EB */
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  width: 95%;
+  text-align: center;
+  position: relative;
+}
+
+.peak-time-chart h3 {
+  width: 110px;
+  height: 26px;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+  font-family: 'Public Sans', sans-serif;
+  font-weight: 600;
+  font-size: 22px;
+  line-height: 26px;
+  letter-spacing: 1%;
+  background-color: rgba(228, 228, 228, 0.1);
+  color: #797979;
+  
+}
+
+.gauge-container {
+  width: 100%;
+  height: 350px;
+  position: relative;
+}
+
+.gauge-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -120%);
+  text-align: center;
+  color: #4B5563;
+}
+
+.gauge-time {
+  font-size: 1.5rem;
+  font-weight: bold;
+  opacity: 1;
+  color:black;
+}
+
+.gauge-label {
+  font-size: 0.8rem;
+  color: #6B7280;
+}
+
+.legend {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  margin-top: 10px;
+  position: relative;
+  top: -100px;
+}
+
+.legend-item {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  font-family: 'Public Sans', sans-serif;
+  font-weight: 400;
+  font-size: 22px;
+  line-height: 100%;
+  letter-spacing: 1%;
+  vertical-align: middle;
+}
+
+
+.legend-item h1 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.legend-item p {
+  margin: 0;
+  font-size: 0.8rem;
+}
