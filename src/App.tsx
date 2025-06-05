@@ -1,10 +1,10 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
-import Analytics from "./pages/Analytics"; // if you have this page
+import Analytics from "./pages/Analytics";
 import Header from "./components/Header/Header";
 
 
-function App() {
+const App: React.FC = () => {
   return (
     <BrowserRouter>
       <Header />
@@ -17,4 +17,4 @@ function App() {
   );
 }
 
-export default App;
+export default App; 

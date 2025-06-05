@@ -2,8 +2,13 @@ import React from "react";
 import { NavLink } from "react-router-dom";
 import './Header.css';
 
-const Header = () => {
-  const pages = [
+interface Page {
+  name: string;
+  link: string;
+}
+
+const Header: React.FC = () => {
+  const pages: Page[] = [
     { name: "Dashboard", link: "/dashboard" },
     { name: "Analytics", link: "/analytics" }
   ];
@@ -45,4 +50,4 @@ const Header = () => {
   );
 };
 
-export default Header;
+export default Header; 

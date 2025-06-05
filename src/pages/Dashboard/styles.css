@@ -2,8 +2,9 @@
 .dashboard-body {
   padding: 30px;
   font-family: sans-serif;
-  width: 95vw;
+  width: 100vw;
   background-color: #F7FAFC;
+  min-height: 100vh;
 }
 
 .header {
@@ -19,6 +20,7 @@
   color: black;
 }
 
+
 .metrics {
   display: flex;
   gap: 20px;
@@ -28,7 +30,7 @@
 
 .card {
   flex: 1;
-  width: 268px;
+  min-width: 268px;
   height: 196px;
   padding: 20px;
   border-radius: 14px;
@@ -47,8 +49,7 @@
   display: grid;
   grid-template-columns: 2fr 1fr;
   gap: 20px;
-  border-radius: 10px;
-  padding: 20px;
+  margin-top: 20px;
 }
 
 .traffic-volume {
@@ -62,6 +63,7 @@
 /* NEW: Traffic Volume Header Flexbox Layout */
 .traffic-volume-header {
   display: flex;
+  flex-direction: row;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 15px;
@@ -87,11 +89,13 @@
   margin-right: 225px;
 }
 
-.metrics-title{
+.metrics-title {
   color: #797979;
   font-size: 14px;
   font-family: 'Public Sans', sans-serif;
-  font-weight: 400px;
+  font-weight: 400;
+  padding-bottom: 5px;
+  padding-top: 10px;
 }
 
 .metrics-value {
@@ -99,6 +103,7 @@
   font-weight: 400;
   font-size: 28px;
   line-height: 100%;
+  padding-top: 10px;
 }
 
 .metrics-change {
@@ -107,6 +112,9 @@
   font-size: 10px;
   line-height: 12px;
   letter-spacing: 0.02em;
+  display: flex;
+  flex-direction: row;
+  padding-top: 10px;
 }
 
 .charts-container h3 {
@@ -253,11 +261,11 @@
   }
   
   .metrics {
-    flex-direction: column;
+    gap: 15px;
   }
   
   .card {
-    width: 100%;
+    min-width: 200px;
   }
 }
 

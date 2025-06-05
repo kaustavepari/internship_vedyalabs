@@ -1,14 +1,36 @@
 import React, { useState } from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 import "./styles.css";
 import PeakTimeChart from "../../components/PeakTimeChart";
-import LineChartContainer from "../../components/LineChartContainer";
+import ChartContainer from "../../components/charts/ChartContainer";
+
 
 // Icons
 const increaseIcon = "https://res.cloudinary.com/dpgxlbpz1/image/upload/v1747331119/icons_dc9ugb.png";
 const decreaseIcon = "https://res.cloudinary.com/dpgxlbpz1/image/upload/v1747331119/icons_1_ntef5v.png";
 
-const baseMetricsData = [
+interface MetricData {
+  title: string;
+  value: string;
+  trend: "increase" | "decrease";
+  changePercent: number;
+  color: string;
+  icon: string;
+}
+
+interface ChartOption {
+  value: string;
+  label: string;
+}
+
+const baseMetricsData: MetricData[] = [
   {
     title: "Total Pedestrians",
     value: "53,00989",
@@ -43,28 +65,33 @@ const baseMetricsData = [
   },
 ];
 
-const lineTypes = [
-  { value: "monotone", label: "Monotone" },
-  { value: "linear", label: "Linear" },
+const chartOptions: ChartOption[] = [
+  { value: "line-monotone", label: "Line Chart (Monotone)" },
+  { value: "line-linear", label: "Line Chart (Linear)" },
+  { value: "bar-simple", label: "Bar Chart (Simple)" },
+  { value: "bar-stacked", label: "Bar Chart (Stacked)" },
+  { value: "bar-horizontal", label: "Bar Chart (Horizontal)" },
 ];
 
-const Dashboard = () => {
-  const [selectedRange, setSelectedRange] = useState("Last 15 days");
-  const [selectedType, setSelectedType] = useState("monotone");
+const Dashboard: React.FC = () => {
+  const [selectedRange, setSelectedRange] = useState<string>("Last 15 days");
+  const [selectedChartType, setSelectedChartType] = useState<string>("line-monotone");
 
   return (
     <div className="dashboard-body">
       <div className="header">
         <h2>Overview</h2>
-        <select
-          className="duration"
-          value={selectedRange}
-          onChange={(e) => setSelectedRange(e.target.value)}
-        >
-          <option>Last 30 days</option>
-          <option>Last 15 days</option>
-          <option>Last week</option>
-        </select>
+        
+        <Select value={selectedRange} onValueChange={setSelectedRange}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Select range" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="Last 30 days">Last 30 days</SelectItem>
+            <SelectItem value="Last 15 days">Last 15 days</SelectItem>
+            <SelectItem value="Last week">Last week</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="metrics">
@@ -85,7 +112,7 @@ const Dashboard = () => {
                   width: "12px",
                   height: "12px",
                   marginRight: "6px",
-                  verticalAlign: "middle"
+                  verticalAlign: "middle",
                 }}
               />
               {`${item.changePercent}% ${item.trend} from ${selectedRange.toLowerCase()}`}
@@ -98,20 +125,21 @@ const Dashboard = () => {
         <div className="traffic-volume">
           <div className="traffic-volume-header">
             <h3>Traffic Volume</h3>
-            <select
-              className="type-dropdown"
-              value={selectedType}
-              onChange={(e) => setSelectedType(e.target.value)}
-            >
-              {lineTypes.map((type) => (
-                <option key={type.value} value={type.value}>
-                  {type.label}
-                </option>
-              ))}
-            </select>
+            <Select value={selectedChartType} onValueChange={setSelectedChartType}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Select chart type" />
+              </SelectTrigger>
+              <SelectContent>
+                {chartOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <hr/>
-          <LineChartContainer selectedType={selectedType}/>
+          <ChartContainer chartType={selectedChartType} />
         </div>
         <PeakTimeChart />
       </div>
@@ -119,4 +147,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default Dashboard; 
