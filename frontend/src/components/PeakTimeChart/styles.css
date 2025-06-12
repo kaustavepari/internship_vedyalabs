@@ -1,0 +1,213 @@
+.peak-time-chart {
+  background-color: rgba(228, 228, 228, 0.3);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  width: 95%;
+  text-align: center;
+  position: relative;
+  height: 515px
+}
+
+.peak-time-chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.peak-time-chart-header h3 {
+  width: 110px;
+  height: 26px;
+  margin: 0;
+  text-align: left;
+  font-family: 'Public Sans', sans-serif;
+  font-weight: 600;
+  font-size: 22px;
+  line-height: 26px;
+  letter-spacing: 1%;
+  background-color: rgba(228, 228, 228, 0.1);
+  color: #797979;
+}
+
+.type-dropdown {
+  padding: 6px 12px;
+  border: 1px solid #B8C4CE;
+  border-radius: 4px;
+  background-color: white;
+  color: #333;
+  font-size: 14px;
+  font-family: "DM Sans";
+  cursor: pointer;
+  outline: none;
+}
+
+.type-dropdown:hover {
+  border-color: #8884d8;
+}
+
+.type-dropdown:focus {
+  border-color: #8884d8;
+  box-shadow: 0 0 0 2px rgba(136, 132, 216, 0.2);
+}
+
+.gauge-container {
+  width: 100%;
+  height: 350px;
+  position: relative;
+}
+
+.gauge-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -120%);
+  text-align: center;
+  color: #4B5563;
+}
+
+.gauge-time {
+  font-size: 1.5rem;
+  font-weight: bold;
+  opacity: 1;
+  color: black;
+}
+
+.gauge-label {
+  font-size: 0.8rem;
+  color: #6B7280;
+}
+
+.gauge-number {
+  font-size: 16px !important;
+  font-weight: 500 !important;
+  color: #4B5563 !important;
+  font-family: 'Public Sans', sans-serif !important;
+}
+
+.legend {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  margin-top: 10px;
+  position: relative;
+  top: -130px;
+}
+
+/* Adjust legend position for full circle charts */
+.peak-time-chart[data-chart-type="pie"] .legend,
+.peak-time-chart[data-chart-type="donut"] .legend {
+  top: 0px;
+}
+
+/* Adjust legend position for radar chart */
+.peak-time-chart[data-chart-type="radar"] .legend {
+  top: -20px;
+}
+
+.legend-item {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  font-family: 'Public Sans', sans-serif;
+  font-weight: 400;
+  font-size: 22px;
+  line-height: 100%;
+  letter-spacing: 1%;
+  vertical-align: middle;
+}
+
+.legend-item h1 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.legend-item p {
+  margin: 0;
+  font-size: 0.8rem;
+}
+
+.tooltip {
+  background-color: white;
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  font-family: 'Public Sans', sans-serif;
+}
+
+.tooltip-label {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.tooltip-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.tooltip-time {
+  font-size: 14px;
+  color: #666;
+  margin-top: 4px;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .peak-time-chart {
+    padding: 15px;
+  }
+
+  .gauge-container {
+    height: 300px;
+  }
+
+  .legend {
+    flex-wrap: wrap;
+    gap: 10px;
+    top: -50px;
+  }
+
+  /* Adjust legend position for full circle charts on tablet */
+  .peak-time-chart[data-chart-type="pie"] .legend,
+  .peak-time-chart[data-chart-type="donut"] .legend {
+    top: -5px;
+  }
+
+  /* Adjust legend position for radar chart on tablet */
+  .peak-time-chart[data-chart-type="radar"] .legend {
+    top: -15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .peak-time-chart {
+    padding: 10px;
+  }
+
+  .peak-time-chart-header h3 {
+    font-size: 18px;
+  }
+
+  .gauge-container {
+    height: 250px;
+  }
+
+  .legend {
+    top: -30px;
+  }
+
+  /* Adjust legend position for full circle charts on mobile */
+  .peak-time-chart[data-chart-type="pie"] .legend,
+  .peak-time-chart[data-chart-type="donut"] .legend {
+    top: -10px;
+  }
+
+  /* Adjust legend position for radar chart on mobile */
+  .peak-time-chart[data-chart-type="radar"] .legend {
+    top: -10px;
+  }
+}
