@@ -3,114 +3,87 @@ from django.utils import timezone
 import random
 import numpy as np
 from datetime import datetime, timedelta
+from django.db import transaction
 from .models import TrafficRecord, TotalCount
 
-def generate_hourly_data(timestamp):
+def get_completely_random_count():
     """
-    Generate mock data for a single hour with more realistic patterns.
+    Generate completely random counts with wide ranges and no patterns.
+    Each call will be completely independent and random.
     """
-    # Base values for each category
-    base_values = {
-        'pedestrian': (50, 200),    # 50-200 pedestrians per hour
-        'two_wheeler': (100, 400),  # 100-400 two-wheelers per hour
-        'car': (80, 300),          # 80-300 cars per hour
-        'bus': (5, 30),            # 5-30 buses per hour
-        'truck': (10, 50)          # 10-50 trucks per hour
+    return {
+        'pedestrian': random.randint(0, 200),      # 0-200 pedestrians
+        'two_wheeler': random.randint(0, 150),     # 0-150 two-wheelers
+        'car': random.randint(0, 100),             # 0-100 cars
+        'bus': random.randint(0, 50),              # 0-50 buses
+        'truck': random.randint(0, 30)             # 0-30 trucks
     }
 
-    # Time-based multipliers
-    hour = timestamp.hour
-    is_weekend = timestamp.weekday() >= 5  # Saturday or Sunday
+def generate_mock_data():
+    try:
+        # Get the latest record in the database
+        latest_record = TrafficRecord.objects.order_by('-timestamp').first()
+        now = timezone.now()
 
-    # Peak hours for different categories
-    peak_hours = {
-        'pedestrian': [8, 9, 17, 18],  # Morning and evening rush
-        'two_wheeler': [8, 9, 17, 18, 19],  # Extended rush hours
-        'car': [8, 9, 17, 18],  # Standard rush hours
-        'bus': [7, 8, 16, 17],  # Slightly earlier for buses
-        'truck': [10, 11, 14, 15]  # Mid-day for trucks
-    }
-
-    # Weekend patterns
-    weekend_multipliers = {
-        'pedestrian': 1.5,  # More pedestrians on weekends
-        'two_wheeler': 0.7,  # Fewer two-wheelers
-        'car': 0.8,  # Fewer cars
-        'bus': 0.5,  # Fewer buses
-        'truck': 0.3  # Much fewer trucks
-    }
-
-    # Generate values with more variation
-    values = {}
-    for category, (min_val, max_val) in base_values.items():
-        # Base random value
-        base = random.randint(min_val, max_val)
-        
-        # Apply time-based variation
-        if hour in peak_hours[category]:
-            base *= random.uniform(1.5, 2.5)  # Peak hour boost
-        elif hour in [12, 13]:  # Lunch hour
-            base *= random.uniform(0.7, 1.2)
-        elif hour in [0, 1, 2, 3, 4]:  # Late night
-            base *= random.uniform(0.1, 0.3)
-        
-        # Apply weekend adjustment
-        if is_weekend:
-            base *= weekend_multipliers[category]
-        
-        # Add some random noise
-        noise = random.uniform(-0.2, 0.2)  # ±20% variation
-        base *= (1 + noise)
-        
-        # Ensure minimum value
-        values[category] = max(1, round(base))
-
-    # Create records
-    traffic_record = TrafficRecord.objects.create(timestamp=timestamp)
-    total_count = TotalCount.objects.create(
-        traffic_record=traffic_record,
-        pedestrian=values['pedestrian'],
-        two_wheeler=values['two_wheeler'],
-        car=values['car'],
-        bus=values['bus'],
-        truck=values['truck']
-    )
-
-    return traffic_record, total_count
-
-def generate_weekly_data(start_date):
-    """
-    Generate data for a week with realistic daily patterns.
-    """
-    records = []
-    for day in range(7):
-        current_date = start_date + timedelta(days=day)
-        
-        # Generate 24 hours of data
-        for hour in range(24):
-            timestamp = timezone.make_aware(
-                datetime.combine(current_date, datetime.min.time()) + timedelta(hours=hour)
+        if not latest_record:
+            print("No existing records found. Starting from 2 months ago...")
+            # If no records exist, start from 2 months ago
+            latest_record = TrafficRecord.objects.create(timestamp=now - timedelta(days=60))
+            # Create initial total counts with completely random values
+            counts = get_completely_random_count()
+            TotalCount.objects.create(
+                traffic_record=latest_record,
+                pedestrian=counts['pedestrian'],
+                two_wheeler=counts['two_wheeler'],
+                car=counts['car'],
+                bus=counts['bus'],
+                truck=counts['truck']
             )
-            traffic_record, total_count = generate_hourly_data(timestamp)
-            records.append((traffic_record, total_count))
-    
-    return records
 
-def generate_historical_data(weeks=1):
-    """
-    Generate historical data for the specified number of weeks.
-    """
-    # Clear existing data
-    TotalCount.objects.all().delete()
-    TrafficRecord.objects.all().delete()
+        # Calculate the time difference between the latest record and now
+        time_diff = now - latest_record.timestamp
 
-    # Generate data
-    start_date = timezone.now().date() - timedelta(days=weeks * 7)
-    all_records = []
-    
-    for week in range(weeks):
-        week_start = start_date + timedelta(days=week * 7)
-        week_records = generate_weekly_data(week_start)
-        all_records.extend(week_records)
+        # If the difference is less than a minute, no need to generate mock data
+        if time_diff.total_seconds() < 60:
+            print("No new data needed. Latest record is less than a minute old.")
+            return
 
-    return len(all_records)
+        # Calculate how many records we'll create
+        minutes_diff = int(time_diff.total_seconds() / 60)
+        print(f"Generating completely random mock data for {minutes_diff} minutes...")
+
+        # Generate mock data for each missing timestamp (every minute)
+        current_time = latest_record.timestamp + timedelta(minutes=1)
+        records_created = 0
+
+        # Use transaction to make the process faster
+        with transaction.atomic():
+            while current_time <= now:
+                # Generate completely random values with no patterns
+                counts = get_completely_random_count()
+
+                # Create a new TrafficRecord
+                new_record = TrafficRecord.objects.create(timestamp=current_time)
+                TotalCount.objects.create(
+                    traffic_record=new_record,
+                    pedestrian=counts['pedestrian'],
+                    two_wheeler=counts['two_wheeler'],
+                    car=counts['car'],
+                    bus=counts['bus'],
+                    truck=counts['truck']
+                )
+
+                records_created += 1
+                if records_created % 100 == 0:  # Show progress every 100 records
+                    print(f"Created {records_created} records...")
+
+                current_time += timedelta(minutes=1)
+
+        print(f"Successfully created {records_created} completely random mock records.")
+
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
+        raise
+
+if __name__ == '__main__':
+    generate_mock_data()
