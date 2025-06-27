@@ -2,7 +2,7 @@
 .dashboard-body {
   padding: 30px;
   font-family: sans-serif;
-  width: 100vw;
+  width: 99vw;
   background-color: #F7FAFC;
   min-height: 100vh;
 }
@@ -285,6 +285,16 @@
     align-items: flex-start;
     gap: 10px;
   }
+  
+  .traffic-volume {
+    margin: 30px;
+    height: 420px;
+  }
+  
+  .peak-time-chart {
+    margin-left: 30px;
+    height: 570px;
+  }
 }
 
 /* Mobile - when single column is needed */
@@ -300,6 +310,15 @@
   .card {
     min-width: 200px;
   }
+  
+  .traffic-volume {
+    padding: 24px;
+  }
+  
+  .peak-time-chart {
+    padding: 24px;
+    height: 600px;
+  }
 }
 
 /* Small mobile - reduce padding only */
@@ -309,10 +328,80 @@
   }
   
   .traffic-volume {
-    padding: 15px;
+    padding: 12px;
   }
   
   .peak-time-chart {
-    padding: 15px;
+    
+    height: 650px;
   }
+}
+
+.checkbox-group {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  margin-bottom: 12px;
+  margin-top: 8px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-family: 'Public Sans', sans-serif;
+  font-size: 15px;
+  color: #797979;
+  cursor: pointer;
+  user-select: none;
+}
+
+.custom-checkbox {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid #B8C4CE;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.2s, background 0.2s;
+  margin-right: 4px;
+  position: relative;
+}
+
+.custom-checkbox.checked {
+  border-color: var(--checkbox-color, #8884d8);
+  background: var(--checkbox-color, #8884d8);
+}
+
+.custom-checkbox .checkbox-indicator {
+  display: none;
+}
+
+.custom-checkbox.checked .checkmark {
+  display: block;
+}
+
+.checkmark {
+  display: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.checkmark svg {
+  display: block;
+  width: 12px;
+  height: 12px;
+  color: #fff;
+}
+
+/* Remove the color indicator next to the label */
+.checkbox-color-indicator {
+  display: none !important;
 }

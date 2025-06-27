@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Select,
   SelectContent,
@@ -14,8 +14,10 @@ import ChartContainer from "../../components/charts/ChartContainer";
 import LoadingSpinner from "../../components/LoadingSpinner";
 
 // Icons
-const INCREASE_ICON = "https://res.cloudinary.com/dpgxlbpz1/image/upload/v1747331119/icons_dc9ugb.png";
-const DECREASE_ICON = "https://res.cloudinary.com/dpgxlbpz1/image/upload/v1747331119/icons_1_ntef5v.png";
+const INCREASE_ICON =
+  "https://res.cloudinary.com/dpgxlbpz1/image/upload/v1747331119/icons_dc9ugb.png";
+const DECREASE_ICON =
+  "https://res.cloudinary.com/dpgxlbpz1/image/upload/v1747331119/icons_1_ntef5v.png";
 
 interface MetricData {
   title: string;
@@ -33,10 +35,10 @@ interface ChartOption {
 
 interface TrafficChartData {
   day: string;
-  Category1: number;
-  Category2: number;
-  Category3: number;
-  Category4: number;
+  pedestrians: number;
+  twoWheelers: number;
+  fourWheelers: number;
+  trucks: number;
 }
 
 interface PeakTimeChartData {
@@ -44,6 +46,7 @@ interface PeakTimeChartData {
   value: number;
   originalValue: number;
   peak_hour: number;
+  peak_date: string;
 }
 
 const CHART_OPTIONS: ChartOption[] = [
@@ -55,13 +58,14 @@ const CHART_OPTIONS: ChartOption[] = [
 ];
 
 const TIME_RANGES = [
-  {label: "Last 2 days", value: 2},
+  { label: "Last 2 days", value: 2 },
   { label: "Last 7 days", value: 7 },
   { label: "Last 15 days", value: 15 },
-  { label: "Last 30 days", value: 30 }
+  { label: "Last 30 days", value: 30 },
+  { label: "Custom Range", value: "custom" },
 ] as const;
 
-type TimeRange = typeof TIME_RANGES[number]["value"];
+type TimeRange = (typeof TIME_RANGES)[number]["value"];
 
 // Default metrics data to show while loading
 const DEFAULT_METRICS: MetricData[] = [
@@ -71,7 +75,7 @@ const DEFAULT_METRICS: MetricData[] = [
     trend: "increase",
     changePercent: 0,
     color: "#e0efff",
-    icon: "https://res.cloudinary.com/dpgxlbpz1/image/upload/v1747327106/Frame_1171275857_owiu91.png"
+    icon: "https://res.cloudinary.com/dpgxlbpz1/image/upload/v1747327106/Frame_1171275857_owiu91.png",
   },
   {
     title: "Two-Wheelers",
@@ -79,7 +83,7 @@ const DEFAULT_METRICS: MetricData[] = [
     trend: "increase",
     changePercent: 0,
     color: "#e5fff1",
-    icon: "https://res.cloudinary.com/dpgxlbpz1/image/upload/v1747327086/Frame_1171275856_rigqxv.png"
+    icon: "https://res.cloudinary.com/dpgxlbpz1/image/upload/v1747327086/Frame_1171275856_rigqxv.png",
   },
   {
     title: "Four-Wheelers",
@@ -87,138 +91,279 @@ const DEFAULT_METRICS: MetricData[] = [
     trend: "increase",
     changePercent: 0,
     color: "#fff2dc",
-    icon: "https://res.cloudinary.com/dpgxlbpz1/image/upload/v1747327067/Frame_1171275859_z6wi01.png"
+    icon: "https://res.cloudinary.com/dpgxlbpz1/image/upload/v1747327067/Frame_1171275859_z6wi01.png",
   },
   {
-    title: "Heavy Vehicles",
-    value: "0/100",
+    title: "Trucks",
+    value: "0",
     trend: "increase",
     changePercent: 0,
     color: "#ffffe5",
-    icon: "https://res.cloudinary.com/dpgxlbpz1/image/upload/v1747327039/Frame_1171275858_rf1oym.png"
-  }
+    icon: "https://res.cloudinary.com/dpgxlbpz1/image/upload/v1747327039/Frame_1171275858_rf1oym.png",
+  },
+];
+
+const CATEGORY_OPTIONS = [
+  { key: "pedestrians", label: "Pedestrians", color: "var(--chart-1)" },
+  { key: "twoWheelers", label: "Two-Wheelers", color: "var(--chart-2)" },
+  { key: "fourWheelers", label: "Four-Wheelers", color: "var(--chart-3)" },
+  { key: "trucks", label: "Trucks", color: "var(--chart-4)" },
 ];
 
 const Dashboard = () => {
   const [selectedRange, setSelectedRange] = useState<TimeRange>(7);
-  const [selectedChartType, setSelectedChartType] = useState<string>("line-monotone");
+  const [customStartDate, setCustomStartDate] = useState<string>("");
+  const [customEndDate, setCustomEndDate] = useState<string>("");
+  const [selectedChartType, setSelectedChartType] =
+    useState<string>("line-monotone");
   const [metricsData, setMetricsData] = useState<MetricData[]>(DEFAULT_METRICS);
-  const [trafficChartData, setTrafficChartData] = useState<TrafficChartData[]>([]);
+  const [trafficChartData, setTrafficChartData] = useState<TrafficChartData[]>(
+    []
+  );
   const [peakTimeData, setPeakTimeData] = useState<PeakTimeChartData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [warning, setWarning] = useState<string | null>(null);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([
+    "pedestrians",
+    "twoWheelers",
+    "fourWheelers",
+    "trucks",
+  ]);
 
-  useEffect(() => {
-    const fetchCardData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        setWarning(null);
-        const response = await axios.get(`http://127.0.0.1:8000/card-data/?period=${selectedRange}`);
-        
-        // Transform the backend response to match MetricData[] format
-        const rawData = response.data;
-        const transformedMetrics: MetricData[] = [
-          {
-            title: "Total Pedestrians",
-            value: String(rawData.pedestrians.current),
-            trend: rawData.pedestrians.percentage >= 0 ? "increase" : "decrease",
-            changePercent: Math.round(rawData.pedestrians.percentage),
-            color: "#e0efff",
-            icon: "https://res.cloudinary.com/dpgxlbpz1/image/upload/v1747327106/Frame_1171275857_owiu91.png"
-          },
-          {
-            title: "Two-Wheelers",
-            value: String(rawData.two_wheelers.current),
-            trend: rawData.two_wheelers.percentage >= 0 ? "increase" : "decrease",
-            changePercent: Math.round(rawData.two_wheelers.percentage),
-            color: "#e5fff1",
-            icon: "https://res.cloudinary.com/dpgxlbpz1/image/upload/v1747327086/Frame_1171275856_rigqxv.png"
-          },
-          {
-            title: "Four-Wheelers",
-            value: String(rawData.four_wheelers.current),
-            trend: rawData.four_wheelers.percentage >= 0 ? "increase" : "decrease",
-            changePercent: Math.round(rawData.four_wheelers.percentage),
-            color: "#fff2dc",
-            icon: "https://res.cloudinary.com/dpgxlbpz1/image/upload/v1747327067/Frame_1171275859_z6wi01.png"
-          },
-          {
-            title: "Heavy Vehicles",
-            value: `${rawData.heavy_vehicles.current}/100`,
-            trend: rawData.heavy_vehicles.percentage >= 0 ? "increase" : "decrease",
-            changePercent: Math.round(rawData.heavy_vehicles.percentage),
-            color: "#ffffe5",
-            icon: "https://res.cloudinary.com/dpgxlbpz1/image/upload/v1747327039/Frame_1171275858_rf1oym.png"
-          }
-        ];
+  // Polling state
+  const [lastDataTimestamp, setLastDataTimestamp] = useState<string | null>(
+    null
+  );
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const dataCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-        setMetricsData(transformedMetrics);
+  // Function to check for new data
+  const checkForNewData = async () => {
+    try {
+      const response = await axios.get(
+        "http://127.0.0.1:8000/latest-data-info/"
+      );
+      const { latest_timestamp, has_data } = response.data;
 
-      } catch (err) {
-        setError('Failed to fetch metrics data');
-        console.error('Error fetching card data:', err);
-        setMetricsData(DEFAULT_METRICS);
-      } finally {
-        setLoading(false);
+      if (has_data && latest_timestamp !== lastDataTimestamp) {
+        console.log("New data detected, refreshing dashboard...");
+        setLastDataTimestamp(latest_timestamp);
+        // Refresh all data
+        await fetchCardData();
+        await fetchTrafficChartData();
+        await fetchPeakTimeData();
       }
-    };
+    } catch (err) {
+      console.error("Error checking for new data:", err);
+    }
+  };
 
-    const fetchTrafficChartData = async () => {
-      try {
-        const response = await axios.get(`http://127.0.0.1:8000/traffic-volume-data/?period=${selectedRange}`);
-        if (response.data?.data) {
-          setTrafficChartData(response.data.data);
-        } else {
-          console.error('Invalid traffic chart data format received from server');
-          setTrafficChartData([]);
+  // Function to start polling
+  const startPolling = () => {
+    // Check for new data every 30 seconds
+    dataCheckIntervalRef.current = setInterval(checkForNewData, 30000);
+
+    // Full refresh every 5 minutes
+    pollingIntervalRef.current = setInterval(async () => {
+      console.log("Performing full data refresh...");
+      await fetchCardData();
+      await fetchTrafficChartData();
+      await fetchPeakTimeData();
+    }, 300000); // 5 minutes
+  };
+
+  // Function to stop polling
+  const stopPolling = () => {
+    if (dataCheckIntervalRef.current) {
+      clearInterval(dataCheckIntervalRef.current);
+      dataCheckIntervalRef.current = null;
+    }
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+      pollingIntervalRef.current = null;
+    }
+  };
+
+  const fetchCardData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      setWarning(null);
+
+      let url = `http://127.0.0.1:8000/card-data/`;
+      if (selectedRange === "custom") {
+        if (!customStartDate || !customEndDate) {
+          setWarning("Please select both start and end dates");
+          return;
         }
-      } catch (err) {
-        console.error('Error fetching traffic chart data:', err);
+        url += `?start_date=${customStartDate}&end_date=${customEndDate}`;
+      } else {
+        url += `?period=${selectedRange}`;
+      }
+
+      const response = await axios.get(url);
+
+      // Transform the backend response to match MetricData[] format
+      const rawData = response.data;
+      const transformedMetrics: MetricData[] = [
+        {
+          title: "Total Pedestrians",
+          value: String(rawData.pedestrians.current),
+          trend: rawData.pedestrians.percentage >= 0 ? "increase" : "decrease",
+          changePercent: Math.round(rawData.pedestrians.percentage),
+          color: "#e0efff",
+          icon: "https://res.cloudinary.com/dpgxlbpz1/image/upload/v1747327106/Frame_1171275857_owiu91.png",
+        },
+        {
+          title: "Two-Wheelers",
+          value: String(rawData.twoWheelers.current),
+          trend: rawData.twoWheelers.percentage >= 0 ? "increase" : "decrease",
+          changePercent: Math.round(rawData.twoWheelers.percentage),
+          color: "#e5fff1",
+          icon: "https://res.cloudinary.com/dpgxlbpz1/image/upload/v1747327086/Frame_1171275856_rigqxv.png",
+        },
+        {
+          title: "Four-Wheelers",
+          value: String(rawData.fourWheelers.current),
+          trend: rawData.fourWheelers.percentage >= 0 ? "increase" : "decrease",
+          changePercent: Math.round(rawData.fourWheelers.percentage),
+          color: "#fff2dc",
+          icon: "https://res.cloudinary.com/dpgxlbpz1/image/upload/v1747327067/Frame_1171275859_z6wi01.png",
+        },
+        {
+          title: "Trucks",
+          value: String(rawData.trucks.current),
+          trend: rawData.trucks.percentage >= 0 ? "increase" : "decrease",
+          changePercent: Math.round(rawData.trucks.percentage),
+          color: "#ffffe5",
+          icon: "https://res.cloudinary.com/dpgxlbpz1/image/upload/v1747327039/Frame_1171275858_rf1oym.png",
+        },
+      ];
+
+      setMetricsData(transformedMetrics);
+    } catch (err) {
+      setError("Failed to fetch metrics data");
+      console.error("Error fetching card data:", err);
+      setMetricsData(DEFAULT_METRICS);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchTrafficChartData = async () => {
+    try {
+      let url = `http://127.0.0.1:8000/traffic-volume-data/`;
+      if (selectedRange === "custom") {
+        if (!customStartDate || !customEndDate) {
+          setWarning("Please select both start and end dates");
+          return;
+        }
+        url += `?start_date=${customStartDate}&end_date=${customEndDate}`;
+      } else {
+        url += `?period=${selectedRange}`;
+      }
+
+      const response = await axios.get(url);
+      if (response.data?.data) {
+        const transformedData = response.data.data.map((item: any) => ({
+          day: item.day,
+          pedestrians: item.pedestrians,
+          twoWheelers: item.twoWheelers,
+          fourWheelers: item.fourWheelers,
+          trucks: item.trucks,
+        }));
+        setTrafficChartData(transformedData);
+      } else {
+        console.error("Invalid traffic chart data format received from server");
         setTrafficChartData([]);
       }
-    };
+    } catch (err) {
+      console.error("Error fetching traffic chart data:", err);
+      setTrafficChartData([]);
+    }
+  };
 
-    const fetchPeakTimeData = async () => {
-      try {
-        const response = await axios.get(`http://127.0.0.1:8000/peak-time-data/?period=${selectedRange}`);
-        if (response.data?.data) {
-          const total = response.data.data.reduce((sum: number, item: PeakTimeChartData) => sum + item.value, 0);
-          const processedData = response.data.data.map((item: PeakTimeChartData) => ({
-            ...item,
-            value: parseFloat(((item.value / total) * 100).toFixed(2)) // Calculate percentage here
-          }));
-          setPeakTimeData(processedData);
-        } else {
-          console.error('Invalid peak time data format received from server');
-          setPeakTimeData([]);
+  const fetchPeakTimeData = async () => {
+    try {
+      let url = `http://127.0.0.1:8000/peak-time-data/`;
+      if (selectedRange === "custom") {
+        if (!customStartDate || !customEndDate) {
+          setWarning("Please select both start and end dates");
+          return;
         }
-      } catch (err) {
-        console.error('Error fetching peak time data:', err);
+        url += `?start_date=${customStartDate}&end_date=${customEndDate}`;
+      } else {
+        url += `?period=${selectedRange}`;
+      }
+
+      const response = await axios.get(url);
+      if (response.data?.data) {
+        // Use the actual peak values directly from backend (no percentage calculation needed)
+        const processedData = response.data.data.map(
+          (item: PeakTimeChartData) => ({
+            ...item,
+            value: item.value, // Keep the actual peak value as is
+          })
+        );
+        setPeakTimeData(processedData);
+      } else {
+        console.error("Invalid peak time data format received from server");
         setPeakTimeData([]);
       }
-    };
+    } catch (err) {
+      console.error("Error fetching peak time data:", err);
+      setPeakTimeData([]);
+    }
+  };
 
+  useEffect(() => {
+    // Initial data fetch
     fetchCardData();
     fetchTrafficChartData();
     fetchPeakTimeData();
-  }, [selectedRange]);
+
+    // Start polling after initial load
+    startPolling();
+
+    // Cleanup function
+    return () => {
+      stopPolling();
+    };
+  }, [selectedRange, customStartDate, customEndDate]);
 
   const handleRangeChange = (value: string) => {
-    const numValue = Number(value);
-    if (numValue === 2 || numValue === 7 || numValue === 15 || numValue === 30) {
-      setSelectedRange(numValue as TimeRange);
+    if (value === "custom") {
+      setSelectedRange("custom");
+    } else {
+      const numValue = Number(value);
+      if (
+        numValue === 2 ||
+        numValue === 7 ||
+        numValue === 15 ||
+        numValue === 30
+      ) {
+        setSelectedRange(numValue as TimeRange);
+      }
     }
   };
+
+  // Filter trafficChartData to only include selected categories
+  const filteredTrafficChartData = trafficChartData.map((item) => {
+    const filtered: any = { day: item.day };
+    selectedCategories.forEach((cat) => {
+      filtered[cat] = item[cat as keyof typeof item];
+    });
+    return filtered;
+  });
 
   return (
     <div className="dashboard-body">
       <div className="header">
         <h2>Overview</h2>
-        
-        <Select 
-          value={selectedRange.toString()} 
+
+        <Select
+          value={selectedRange.toString()}
           onValueChange={handleRangeChange}
         >
           <SelectTrigger className="w-[180px]">
@@ -232,6 +377,36 @@ const Dashboard = () => {
             ))}
           </SelectContent>
         </Select>
+        {selectedRange === "custom" && (
+          <div style={{ display: "flex", gap: "1rem", marginTop: "1rem" }}>
+            <div>
+              <label style={{ fontSize: "0.9rem" }}>Start Date: </label>
+              <input
+                type="date"
+                value={customStartDate}
+                onChange={(e) => setCustomStartDate(e.target.value)}
+                style={{
+                  padding: "0.3rem",
+                  borderRadius: "4px",
+                  border: "1px solid #ccc",
+                }}
+              />
+            </div>
+            <div>
+              <label style={{ fontSize: "0.9rem" }}>End Date: </label>
+              <input
+                type="date"
+                value={customEndDate}
+                onChange={(e) => setCustomEndDate(e.target.value)}
+                style={{
+                  padding: "0.3rem",
+                  borderRadius: "4px",
+                  border: "1px solid #ccc",
+                }}
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {error && <div className="error-message">{error}</div>}
@@ -239,7 +414,11 @@ const Dashboard = () => {
 
       <div className="metrics">
         {metricsData.map((item) => (
-          <div key={item.title} className="card" style={{ background: item.color }}>
+          <div
+            key={item.title}
+            className="card"
+            style={{ background: item.color }}
+          >
             <img
               src={item.icon}
               alt={item.title}
@@ -255,7 +434,9 @@ const Dashboard = () => {
                 <h2 className="metrics-value">{item.value}</h2>
                 <p className="metrics-change">
                   <img
-                    src={item.trend === "increase" ? INCREASE_ICON : DECREASE_ICON}
+                    src={
+                      item.trend === "increase" ? INCREASE_ICON : DECREASE_ICON
+                    }
                     alt={item.trend}
                     style={{
                       width: "12px",
@@ -273,10 +454,17 @@ const Dashboard = () => {
       </div>
 
       <div className="charts-container">
-        <div className={`traffic-volume ${selectedChartType === "bar-horizontal" ? "h-[515px]" : "h-[380px]"}`}>
+        <div
+          className={`traffic-volume ${
+            selectedChartType === "bar-horizontal" ? "h-[515px]" : "h-[380px]"
+          }`}
+        >
           <div className="traffic-volume-header">
             <h3>Traffic Volume</h3>
-            <Select value={selectedChartType} onValueChange={setSelectedChartType}>
+            <Select
+              value={selectedChartType}
+              onValueChange={setSelectedChartType}
+            >
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Select chart type" />
               </SelectTrigger>
@@ -289,8 +477,58 @@ const Dashboard = () => {
               </SelectContent>
             </Select>
           </div>
-          <hr/>
-          <ChartContainer chartType={selectedChartType} data={trafficChartData} />
+          {/* Category Selector */}
+          <div className="checkbox-group">
+            {CATEGORY_OPTIONS.map((cat) => (
+              <label key={cat.key} className="checkbox-label">
+                <span
+                  className={`custom-checkbox${
+                    selectedCategories.includes(cat.key) ? " checked" : ""
+                  }`}
+                  style={{
+                    ["--checkbox-color" as any]: cat.color,
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedCategories.includes(cat.key)}
+                    onChange={() => {
+                      setSelectedCategories((prev) =>
+                        prev.includes(cat.key)
+                          ? prev.filter((c) => c !== cat.key)
+                          : [...prev, cat.key]
+                      );
+                    }}
+                    style={{ display: "none" }}
+                  />
+                  {selectedCategories.includes(cat.key) && (
+                    <span className="checkmark">
+                      <svg
+                        viewBox="0 0 16 16"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M4 8.5L7 11.5L12 5.5"
+                          stroke="white"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </span>
+                  )}
+                </span>
+                {cat.label}
+              </label>
+            ))}
+          </div>
+          <hr />
+          <ChartContainer
+            chartType={selectedChartType}
+            data={filteredTrafficChartData}
+            selectedCategories={selectedCategories}
+          />
         </div>
         <PeakTimeChart data={peakTimeData} />
       </div>
@@ -298,4 +536,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard; 
+export default Dashboard;

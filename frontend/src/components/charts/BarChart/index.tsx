@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import React, { useMemo } from "react";
 import {
@@ -9,51 +9,51 @@ import {
   CartesianGrid,
   ResponsiveContainer,
   Tooltip,
-  Legend
+  Legend,
 } from "recharts";
 
-import {
-  Card,
-  CardContent
-} from "@/components/ui/card";
-import {
-  ChartContainer,
-} from "@/components/ui/chart";
+import { Card, CardContent } from "@/components/ui/card";
+import { ChartContainer } from "@/components/ui/chart";
 import { commonChartProps, xAxisProps, yAxisProps } from "../common/chartProps";
 
 interface TrafficData {
   day: string;
-  Category1: number;
-  Category2: number;
-  Category3: number;
-  Category4: number;
+  pedestrians: number;
+  twoWheelers: number;
+  fourWheelers: number;
+  trucks: number;
 }
 
 interface BarChartProps {
   data: TrafficData[];
   chartType: string;
+  selectedCategories: string[];
 }
 
 const chartConfig = {
-  Category1: {
+  pedestrians: {
     label: "Pedestrians",
     color: "var(--chart-1)",
   },
-  Category2: {
+  twoWheelers: {
     label: "Two-Wheelers",
     color: "var(--chart-2)",
   },
-  Category3: {
+  fourWheelers: {
     label: "Four-Wheelers",
     color: "var(--chart-3)",
   },
-  Category4: {
-    label: "Heavy Vehicles",
+  trucks: {
+    label: "Trucks",
     color: "var(--chart-4)",
   },
 };
 
-const BarChart: React.FC<BarChartProps> = ({ data, chartType }) => {
+const BarChart: React.FC<BarChartProps> = ({
+  data,
+  chartType,
+  selectedCategories,
+}) => {
   const barSize = 20;
 
   // Process data for horizontal chart
@@ -63,35 +63,35 @@ const BarChart: React.FC<BarChartProps> = ({ data, chartType }) => {
     // Group data by week if there are more than 7 days
     if (data.length > 7) {
       const weekGroups = new Map<string, TrafficData>();
-      
-      data.forEach(item => {
+
+      data.forEach((item) => {
         const weekNum = Math.floor(data.indexOf(item) / 7) + 1;
         const weekKey = `Week ${weekNum}`;
-        
+
         if (!weekGroups.has(weekKey)) {
           weekGroups.set(weekKey, {
             day: weekKey,
-            Category1: 0,
-            Category2: 0,
-            Category3: 0,
-            Category4: 0,
+            pedestrians: 0,
+            twoWheelers: 0,
+            fourWheelers: 0,
+            trucks: 0,
           });
         }
-        
+
         const weekData = weekGroups.get(weekKey)!;
-        weekData.Category1 += item.Category1;
-        weekData.Category2 += item.Category2;
-        weekData.Category3 += item.Category3;
-        weekData.Category4 += item.Category4;
+        weekData.pedestrians += item.pedestrians;
+        weekData.twoWheelers += item.twoWheelers;
+        weekData.fourWheelers += item.fourWheelers;
+        weekData.trucks += item.trucks;
       });
 
       // Calculate averages
-      return Array.from(weekGroups.values()).map(week => ({
+      return Array.from(weekGroups.values()).map((week) => ({
         ...week,
-        Category1: Math.round(week.Category1 / 7),
-        Category2: Math.round(week.Category2 / 7),
-        Category3: Math.round(week.Category3 / 7),
-        Category4: Math.round(week.Category4 / 7),
+        pedestrians: Math.round(week.pedestrians / 7),
+        twoWheelers: Math.round(week.twoWheelers / 7),
+        fourWheelers: Math.round(week.fourWheelers / 7),
+        trucks: Math.round(week.trucks / 7),
       }));
     }
 
@@ -111,7 +111,8 @@ const BarChart: React.FC<BarChartProps> = ({ data, chartType }) => {
                   style={{ backgroundColor: entry.color }}
                 />
                 <span className="text-sm">
-                  {chartConfig[entry.dataKey as keyof typeof chartConfig].label}: {entry.value.toLocaleString()}
+                  {chartConfig[entry.dataKey as keyof typeof chartConfig].label}
+                  : {entry.value.toLocaleString()}
                 </span>
               </div>
             ))}
@@ -129,37 +130,41 @@ const BarChart: React.FC<BarChartProps> = ({ data, chartType }) => {
           <ChartContainer config={chartConfig}>
             <div className="relative">
               <div className="absolute right-0 top-0 z-10">
-                <Legend 
-                  iconType="circle" 
-                  iconSize={8} 
-                  align="right" 
+                <Legend
+                  iconType="circle"
+                  iconSize={8}
+                  align="right"
                   verticalAlign="top"
                   wrapperStyle={{ paddingBottom: 20 }}
                 />
               </div>
               <div className="mt-8">
                 <ResponsiveContainer width="100%" height={350}>
-                  <RechartsBarChart 
-                    data={processedData} 
-                    layout="vertical" 
+                  <RechartsBarChart
+                    data={processedData}
+                    layout="vertical"
                     barSize={25}
                     barGap={2}
                     {...commonChartProps}
                   >
-                    <CartesianGrid stroke="#e3e9f0" vertical={true} horizontal={true} />
-                    <XAxis 
-                      type="number" 
+                    <CartesianGrid
+                      stroke="#e3e9f0"
+                      vertical={true}
+                      horizontal={true}
+                    />
+                    <XAxis
+                      type="number"
                       tickFormatter={(value) => value.toLocaleString()}
-                      domain={[0, 'dataMax + 100']}
-                      tick={{ 
-                        fill: "#B8C4CE", 
-                        fontWeight: 100, 
-                        fontFamily: "DM Sans" 
+                      domain={[0, "dataMax + 100"]}
+                      tick={{
+                        fill: "#B8C4CE",
+                        fontWeight: 100,
+                        fontFamily: "DM Sans",
                       }}
                       axisLine={{ stroke: "#B8C4CE", strokeWidth: 1 }}
                       tickLine={false}
                     />
-                    <YAxis 
+                    <YAxis
                       dataKey="day"
                       type="category"
                       {...yAxisProps}
@@ -167,10 +172,21 @@ const BarChart: React.FC<BarChartProps> = ({ data, chartType }) => {
                       width={80}
                     />
                     <Tooltip content={renderTooltip} />
-                    <Bar dataKey="Category1" fill="var(--chart-1)" radius={5} />
-                    <Bar dataKey="Category2" fill="var(--chart-2)" radius={5} />
-                    <Bar dataKey="Category3" fill="var(--chart-3)" radius={5} />
-                    <Bar dataKey="Category4" fill="var(--chart-4)" radius={5} />
+                    {selectedCategories.map((cat) => (
+                      <Bar
+                        key={cat}
+                        dataKey={cat}
+                        name={
+                          chartConfig[cat as keyof typeof chartConfig]?.label ||
+                          cat
+                        }
+                        fill={
+                          chartConfig[cat as keyof typeof chartConfig]?.color ||
+                          "#8884d8"
+                        }
+                        radius={5}
+                      />
+                    ))}
                   </RechartsBarChart>
                 </ResponsiveContainer>
               </div>
@@ -184,45 +200,61 @@ const BarChart: React.FC<BarChartProps> = ({ data, chartType }) => {
   return (
     <div className="chart-container">
       <ResponsiveContainer width="100%" height={250}>
-        <RechartsBarChart 
-          data={data} 
-          barSize={barSize} 
+        <RechartsBarChart
+          data={data}
+          barSize={barSize}
           barGap={chartType === "bar-stacked" ? 0 : 2}
           {...commonChartProps}
         >
           <CartesianGrid vertical={false} />
           <XAxis {...xAxisProps} />
           <YAxis {...yAxisProps} />
-          <Legend iconType="circle" iconSize={8} align="left" wrapperStyle={{ marginTop: 10 }} />
+          <Legend
+            iconType="circle"
+            iconSize={8}
+            align="left"
+            wrapperStyle={{ marginTop: 10 }}
+          />
           <Tooltip content={renderTooltip} />
-          <Bar 
-            dataKey="Category1" 
-            fill="var(--chart-1)" 
-            stackId={chartType === "bar-stacked" ? "stack" : undefined} 
-            radius={chartType === "bar-stacked" ? [0, 0, 4, 4] : [4, 4, 4, 4]} 
-          />
-          <Bar 
-            dataKey="Category2" 
-            fill="var(--chart-2)" 
-            stackId={chartType === "bar-stacked" ? "stack" : undefined} 
-            radius={chartType === "bar-stacked" ? 0 : [4, 4, 4, 4]} 
-          />
-          <Bar 
-            dataKey="Category3" 
-            fill="var(--chart-3)" 
-            stackId={chartType === "bar-stacked" ? "stack" : undefined} 
-            radius={chartType === "bar-stacked" ? 0 : [4, 4, 4, 4]} 
-          />
-          <Bar 
-            dataKey="Category4" 
-            fill="var(--chart-4)" 
-            stackId={chartType === "bar-stacked" ? "stack" : undefined} 
-            radius={chartType === "bar-stacked" ? [4, 4, 0, 0] : [4, 4, 4, 4]} 
-          />
+          {selectedCategories.map((cat, idx) => {
+            let radius = [0, 0, 0, 0];
+            if (chartType === "bar-stacked") {
+              if (idx === 0 && selectedCategories.length === 1) {
+                // Only one bar: round all corners
+                radius = [4, 4, 4, 4];
+              } else if (idx === 0) {
+                // Topmost: round top corners
+                radius = [0, 0, 4, 4];
+              } else if (idx === selectedCategories.length - 1) {
+                // Bottommost: round bottom corners
+                radius = [4, 4, 0, 0];
+              } else {
+                // Middle: no rounding
+                radius = [0, 0, 0, 0];
+              }
+            } else {
+              radius = [4, 4, 4, 4];
+            }
+            return (
+              <Bar
+                key={cat}
+                dataKey={cat}
+                name={
+                  chartConfig[cat as keyof typeof chartConfig]?.label || cat
+                }
+                fill={
+                  chartConfig[cat as keyof typeof chartConfig]?.color ||
+                  "#8884d8"
+                }
+                stackId={chartType === "bar-stacked" ? "stack" : undefined}
+                radius={radius as [number, number, number, number]}
+              />
+            );
+          })}
         </RechartsBarChart>
       </ResponsiveContainer>
     </div>
   );
 };
 
-export default BarChart; 
+export default BarChart;

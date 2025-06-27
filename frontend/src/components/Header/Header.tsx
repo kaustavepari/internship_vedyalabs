@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import './Header.css';
+import "./Header.css";
 
 interface Page {
   name: string;
@@ -9,7 +9,7 @@ interface Page {
 const Header = () => {
   const pages: Page[] = [
     { name: "Dashboard", link: "/dashboard" },
-    { name: "Analytics", link: "/analytics" }
+    { name: "Analytics", link: "/analytics" },
   ];
 
   return (
@@ -39,9 +39,9 @@ const Header = () => {
 
       {/* Right section: profile pic */}
       <div className="profile-pic-container">
-        <img 
-          src="https://res.cloudinary.com/dpgxlbpz1/image/upload/v1747492996/Rectangle_6_sn6jym.png" 
-          alt="Profile" 
+        <img
+          src="https://res.cloudinary.com/dpgxlbpz1/image/upload/v1747492996/Rectangle_6_sn6jym.png"
+          alt="Profile"
           className="profile-pic"
         />
       </div>
@@ -49,4 +49,4 @@ const Header = () => {
   );
 };
 
-export default Header; 
+export default Header;
