@@ -1,0 +1,28 @@
+Django==5.2.2
+django-cors-headers==4.3.1
+python-dotenv==1.0.1  # For environment variable management
+pytz==2023.3  # Timezone support
+sqlparse>=0.4.4  # SQL parsing used by Django
+asgiref>=3.8.1,<4.0.0  # ASGI support for Django
+
+# Development dependencies
+pytest>=7.4.2  # Testing framework
+pytest-django>=4.5.2  # Django plugin for pytest
+pytest-cov>=4.1.0  # Test coverage reporting
+black>=23.9.1  # Code formatter
+isort>=5.12.0  # Import sorter
+flake8>=6.1.0  # Linter
+
+# Database (SQLite is included in Python standard library)
+# Add other database drivers here if needed in the future
+# psycopg2-binary>=2.9.9  # For PostgreSQL
+# mysqlclient>=2.2.0  # For MySQL
+
+# API Development
+djangorestframework>=3.14.0  # For REST API endpoints
+drf-yasg>=1.21.5  # For API documentation
+
+# Security
+dj-database-url>=2.0.0  # For database URL configuration
+gunicorn>=21.2.0  # Production WSGI server
+whitenoise>=6.5.0  # For static file serving in production
