@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from "react";
+import ChatInterface from "@/components/ChatInterface";
+import { useDashboard, type VehicleCategory } from "@/contexts/DashboardContext";
 import {
   Select,
   SelectContent,
@@ -10,7 +12,7 @@ import axios from "axios";
 
 import "./styles.css";
 import PeakTimeChart from "../../components/PeakTimeChart";
-import ChartContainer from "../../components/charts/ChartContainer";
+import TrafficVolumeChart from "../../components/charts/TrafficVolumeChart";
 import LoadingSpinner from "../../components/LoadingSpinner";
 
 // Icons
@@ -103,7 +105,11 @@ const DEFAULT_METRICS: MetricData[] = [
   },
 ];
 
-const CATEGORY_OPTIONS = [
+const CATEGORY_OPTIONS: Array<{
+  key: VehicleCategory;
+  label: string;
+  color: string;
+}> = [
   { key: "pedestrians", label: "Pedestrians", color: "var(--chart-1)" },
   { key: "twoWheelers", label: "Two-Wheelers", color: "var(--chart-2)" },
   { key: "fourWheelers", label: "Four-Wheelers", color: "var(--chart-3)" },
@@ -111,15 +117,12 @@ const CATEGORY_OPTIONS = [
 ];
 
 const Dashboard = () => {
+  const { dashboardState } = useDashboard();
   const [selectedRange, setSelectedRange] = useState<TimeRange>(7);
   const [customStartDate, setCustomStartDate] = useState<string>("");
   const [customEndDate, setCustomEndDate] = useState<string>("");
-  const [selectedChartType, setSelectedChartType] =
-    useState<string>("line-monotone");
   const [metricsData, setMetricsData] = useState<MetricData[]>(DEFAULT_METRICS);
-  const [trafficChartData, setTrafficChartData] = useState<TrafficChartData[]>(
-    []
-  );
+  const [trafficChartData, setTrafficChartData] = useState<TrafficChartData[]>([]);
   const [peakTimeData, setPeakTimeData] = useState<PeakTimeChartData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -137,6 +140,8 @@ const Dashboard = () => {
   );
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const dataCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  const PIE_CHARTS = ["pie", "donut", "gauge"]
 
   // Function to check for new data
   const checkForNewData = async () => {
@@ -454,84 +459,35 @@ const Dashboard = () => {
       </div>
 
       <div className="charts-container">
-        <div
-          className={`traffic-volume ${
-            selectedChartType === "bar-horizontal" ? "h-[515px]" : "h-[380px]"
-          }`}
-        >
-          <div className="traffic-volume-header">
-            <h3>Traffic Volume</h3>
-            <Select
-              value={selectedChartType}
-              onValueChange={setSelectedChartType}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Select chart type" />
-              </SelectTrigger>
-              <SelectContent>
-                {CHART_OPTIONS.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          {/* Category Selector */}
-          <div className="checkbox-group">
-            {CATEGORY_OPTIONS.map((cat) => (
-              <label key={cat.key} className="checkbox-label">
-                <span
-                  className={`custom-checkbox${
-                    selectedCategories.includes(cat.key) ? " checked" : ""
-                  }`}
-                  style={{
-                    ["--checkbox-color" as any]: cat.color,
-                  }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={selectedCategories.includes(cat.key)}
-                    onChange={() => {
-                      setSelectedCategories((prev) =>
-                        prev.includes(cat.key)
-                          ? prev.filter((c) => c !== cat.key)
-                          : [...prev, cat.key]
-                      );
-                    }}
-                    style={{ display: "none" }}
-                  />
-                  {selectedCategories.includes(cat.key) && (
-                    <span className="checkmark">
-                      <svg
-                        viewBox="0 0 16 16"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          d="M4 8.5L7 11.5L12 5.5"
-                          stroke="white"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    </span>
-                  )}
-                </span>
-                {cat.label}
-              </label>
-            ))}
-          </div>
-          <hr />
-          <ChartContainer
-            chartType={selectedChartType}
-            data={filteredTrafficChartData}
-            selectedCategories={selectedCategories}
-          />
-        </div>
-        <PeakTimeChart data={peakTimeData} />
-      </div>
+  {dashboardState.charts.map((chart) => {
+    const isPeakTimeChart = PIE_CHARTS.includes(chart.type);
+
+    return isPeakTimeChart ? (
+      <PeakTimeChart 
+        key={chart.title}
+        data={peakTimeData}
+        chartType={chart.type}
+      />
+    ) : (
+      <TrafficVolumeChart
+        key={chart.title}
+        chart={chart}
+        filteredTrafficChartData={filteredTrafficChartData}
+        initialSelectedCategories={chart.category}
+        onCategoryToggle={(category) => {
+          setSelectedCategories((prev) =>
+            prev.includes(category)
+              ? prev.filter((c) => c !== category)
+              : [...prev, category]
+          );
+        }}
+        categoryOptions={CATEGORY_OPTIONS}
+      />
+    );
+  })}
+</div>
+      <hr />
+      <ChatInterface />
     </div>
   );
 };

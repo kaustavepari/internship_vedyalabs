@@ -359,10 +359,11 @@ const PeakTimeDonut: React.FC<ChartComponentProps> = ({
 
 interface PeakTimeChartProps {
   data: PeakTimeData[];
+  chartType: string;
 }
 
-const PeakTimeChart: React.FC<PeakTimeChartProps> = ({ data }) => {
-  const [selectedChartType, setSelectedChartType] = useState<string>("gauge");
+const PeakTimeChart: React.FC<PeakTimeChartProps> = ({ data , chartType }) => {
+  const [selectedChartType, setSelectedChartType] = useState<string>(chartType);
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
 
   const renderChart = () => {

@@ -1,11 +1,77 @@
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
-from .models import TrafficRecord, TotalCount
+from django.views.decorators.csrf import csrf_exempt
+from .models import TrafficRecord
 from .utils import (
     TimeRangeService, 
     DataAggregationService, 
     DataTransformationService
 )
+from .llm_service import (
+    process_user_prompt
+)
+
+import logging
+import json
+
+logger = logging.getLogger(__name__)
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def get_output_from_llm(request):
+    logger.info("Received LLM request")
+    user_prompt = request.POST.get("user_prompt")
+    logger.info("User prompt: %s", str(user_prompt or '')[:200])
+
+    # Utility: Recursively sanitize values so JSON serialization never fails
+    def make_json_safe(value):
+        if isinstance(value, dict):
+            return {k: make_json_safe(v) for k, v in value.items()}
+        elif isinstance(value, list):
+            return [make_json_safe(v) for v in value]
+        elif isinstance(value, Exception):
+            return str(value)
+        return value
+
+    def create_error_response(error, error_type, status=500):
+        error_msg = str(error) or 'An unknown error occurred'
+        logger.error("Error in LLM request: %s - %s", error_type, error_msg, exc_info=True)
+        
+        payload = {
+            "error": error_msg,
+            "error_type": str(error_type),
+            "details": error_msg
+        }
+        return JsonResponse(payload, status=status, json_dumps_params={'ensure_ascii': False})
+
+    try:
+        # --- Call LLM ---
+        llm_response = process_user_prompt(user_prompt)
+
+        # --- If LLM returned an exception object ---
+        if isinstance(llm_response, Exception):
+            safe_message = str(llm_response)
+            response_data = {
+                "response": safe_message,
+                "error": True,
+                "error_type": llm_response.__class__.__name__,
+            }
+            return JsonResponse(response_data)
+
+        # --- LLM returned normal structured data ---
+        safe_response = make_json_safe(llm_response)
+
+        logger.info("LLM response: %s...", str(safe_response)[:200])
+        return JsonResponse({"response": safe_response})
+
+    except ValueError as ve:
+        return create_error_response(f"Invalid request: {str(ve)}", "ValidationError", 400)
+
+    except Exception as e:
+        return create_error_response(str(e), e.__class__.__name__, 500)
+
+
+
 
 @require_http_methods(["GET"])
 def get_all_data(request):

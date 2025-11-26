@@ -22,8 +22,15 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('data/', views.get_all_data, name='get_all_data'),
     path('card-data/', views.get_card_data, name='get_card_data'),
-    path('traffic-volume-data/', views.get_traffic_volume_data, name='get_traffic_volume_data'),
-    path('peak-time-data/', views.get_peak_time_data, name='get_peak_time_data'),
+    path(
+        'traffic-volume-data/',
+        views.get_traffic_volume_data,
+        name='get_traffic_volume_data'
+    ),
+    path('peak-time-data/', 
+         views.get_peak_time_data, 
+         name='get_peak_time_data'),
     path('latest-data-info/', views.get_latest_data_info, name='get_latest_data_info'),
     path('debug-card-data/', views.debug_card_data, name='debug_card_data'),
+    path('get-output-from-llm/', views.get_output_from_llm, name="get_output_from_llm")
 ]
